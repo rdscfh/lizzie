@@ -35,7 +35,7 @@ namespace lizzie
             // Sanity checking invocation.
             if (arguments.Count == 0)
                 throw new LizzieRuntimeException("No arguments provided to 'var', provide at least a symbol name, e.g. 'var(@foo)'.");
-            
+
             // Expecting symbol name as the first argument and doing some basic sanity checking.
             var symbolObject = arguments.Get(0);
             if (symbolObject == null)
@@ -115,7 +115,8 @@ namespace lizzie
 
             // Retrieving the first value, making sure we retrieve it as a "dynamic type".
             dynamic result = arguments.Get(0);
-            foreach (dynamic ix in arguments.Skip(1)) {
+            foreach (dynamic ix in arguments.Skip(1))
+            {
 
                 // Adding currently iterated argument.
                 result += ix;
@@ -142,7 +143,8 @@ namespace lizzie
             dynamic result = arguments.Get(0);
             if (arguments.Count == 1)
                 return -result;
-            foreach (dynamic ix in arguments.Skip(1)) {
+            foreach (dynamic ix in arguments.Skip(1))
+            {
                 result -= ix;
             }
 
@@ -165,7 +167,8 @@ namespace lizzie
 
             // Retrieving the first value, making sure we retrieve it as a "dynamic type".
             dynamic result = arguments.Get(0);
-            foreach (dynamic ix in arguments.Skip(1)) {
+            foreach (dynamic ix in arguments.Skip(1))
+            {
                 result *= ix;
             }
 
@@ -188,7 +191,8 @@ namespace lizzie
 
             // Retrieving the first value, making sure we retrieve it as a "dynamic type".
             dynamic result = arguments.Get(0);
-            foreach (dynamic ix in arguments.Skip(1)) {
+            foreach (dynamic ix in arguments.Skip(1))
+            {
                 result /= ix;
             }
 
@@ -211,7 +215,8 @@ namespace lizzie
 
             // Retrieving the first value, making sure we retrieve it as a "dynamic type".
             dynamic result = arguments.Get(0);
-            foreach (dynamic ix in arguments.Skip(1)) {
+            foreach (dynamic ix in arguments.Skip(1))
+            {
                 result %= ix;
             }
 
@@ -241,8 +246,10 @@ namespace lizzie
 
             // Retrieving argument declarations and sanity checking them.
             var formallyDeclaredArguments = arguments.Skip(1).Select(ix => ix as string).ToList();
-            foreach (var ix in formallyDeclaredArguments) {
-                if (ix is string ixStr)
+            foreach (var ix in formallyDeclaredArguments)
+            {
+                var ixStr = ix as string;
+                if (ixStr != null)
                     Compiler.SanityCheckSymbolName(ixStr);
                 else
                     throw new LizzieRuntimeException("When declaring a function, all argument declarations must be valid symbols, e.g. '@foo'.");
@@ -254,7 +261,8 @@ namespace lizzie
              * NOTICE!
              * A function always pushes the stack.
              */
-            return new Function<TContext>((invocationContext, invocationBinder, invocationArguments) => {
+            return new Function<TContext>((invocationContext, invocationBinder, invocationArguments) =>
+            {
 
                 /*
                  * Sanity checking that caller did not supply more arguments than
@@ -265,13 +273,15 @@ namespace lizzie
 
                 // Pushing stack, making sure we can correctly pop it once we're done.
                 invocationBinder.PushStack();
-                try {
+                try
+                {
 
                     /*
                      * Binding all argument declarations for our lambda to whatever
                      * the caller provided as values during invocation.
                      */
-                    for (var ix = 0; ix < invocationArguments.Count; ix++) {
+                    for (var ix = 0; ix < invocationArguments.Count; ix++)
+                    {
                         invocationBinder[formallyDeclaredArguments[ix]] = invocationArguments.Get(ix);
                     }
 
@@ -284,14 +294,17 @@ namespace lizzie
                      * declares, simply setting the rest of the declared arguments
                      * to "null" values.
                      */
-                    for (var ix = invocationArguments.Count; ix < formallyDeclaredArguments.Count; ix++) {
+                    for (var ix = invocationArguments.Count; ix < formallyDeclaredArguments.Count; ix++)
+                    {
                         invocationBinder[formallyDeclaredArguments[ix]] = null;
                     }
 
                     // Evaluating function.
                     return lambda(invocationContext, invocationBinder, invocationArguments);
 
-                } finally {
+                }
+                finally
+                {
 
                     // Popping stack.
                     invocationBinder.PopStack();
@@ -313,14 +326,17 @@ namespace lizzie
             // Sanity checking invocation.
             if (arguments.Count != 1)
                 throw new LizzieRuntimeException("The 'apply' keyword expects exactly 1 argument.");
-
+            var list = arguments.Get(0) as List<object>;
             // Checking type of invocation, which might be 'list' or 'map'.
-            if (arguments.Get(0) is List<object> list) {
+            if (list != null)
+            {
 
                 // list of arguments.
                 return new Arguments(list);
 
-            } else {
+            }
+            else
+            {
 
                 // Oops ...!!
                 throw new LizzieRuntimeException("The 'apply' keyword expects a 'list' as its only argument.");
@@ -382,7 +398,8 @@ namespace lizzie
             var arg1 = arguments.Get(0);
 
             // Comparing all other objects to the first.
-            foreach (var ix in arguments.Skip(1)) {
+            foreach (var ix in arguments.Skip(1))
+            {
                 if (arg1 == null && ix != null || arg1 != null && ix == null)
                     return null;
                 if (arg1 != null && !arg1.Equals(ix))
@@ -508,26 +525,32 @@ namespace lizzie
              * Notice, if there are zero arguments given to "any", it will return null (false), contrary to "all" that will return true
              * given an empty list of arguments.
              */
-            return arguments.FirstOrDefault(ix => {
+            return arguments.FirstOrDefault(ix =>
+            {
 
                 // Making sure we verify that this is a "delayed verification" of condition.
-                if (ix is Function<TContext> function) {
-
+                if (ix is Function<TContext>)
+                {
+                    var function = ix as Function<TContext>;
                     // Checking if function returns something, and returning predicate value accordingly.
                     var ixContent = function(ctx, binder, new Arguments());
                     if (ixContent == null)
                         return false;
                     return true;
 
-                } else if (ix is string symbol) {
-
-                    // Symbol.
+                }
+                else if (ix is string)
+                {
+                    var symbol = ix as string;
+                    // Symbol.  
                     var symbolValue = binder[symbol];
                     if (symbolValue == null)
                         return false;
                     return true;
 
-                } else {
+                }
+                else
+                {
 
                     throw new LizzieRuntimeException("The 'any' function requires you to only pass in conditions as function invocations. Prepend your condition with an '@' sign if this is a problem.");
                 }
@@ -543,31 +566,39 @@ namespace lizzie
         /// <value>The function wrapping the 'all keyword'.</value>
         public static Function<TContext> All => new Function<TContext>((ctx, binder, arguments) =>
         {
-            foreach (var arg in arguments) {
-                if (arg == null) {
+            foreach (var arg in arguments)
+            {
+                if (arg == null)
+                {
 
                     throw new LizzieRuntimeException("The 'all' function requires you to only pass in function invocations. Prepend your condition with an '@' sign if this is a problem.");
 
-                } else {
+                }
+                else
+                {
 
                     /*
                      * Checking if this is a function, at which point we evaluate it,
                      * to make sure we support "delayed function invocations".
                      */
-                    if (arg is Function<TContext> functor) {
-
+                    if (arg is Function<TContext>)
+                    {
+                        var functor = arg as Function<TContext>;
                         // Making sure we verify that this is a "delayed verification" of condition.
                         if (functor(ctx, binder, arguments) == null)
                             return null; // No reasons to continue ...
 
-                    } else if (arg is string symbol) {
-
+                    }
+                    else if (arg is string)
+                    {
                         // Symbol.
-                        var symbolValue = binder[symbol];
+                        var symbolValue = binder[arg as string];
                         if (symbolValue == null)
                             return null;
 
-                    } else {
+                    }
+                    else
+                    {
 
                         throw new LizzieRuntimeException("The 'all' function requires you to only pass in function invocations. Prepend your condition with an '@' sign if this is a problem.");
                     }
@@ -601,11 +632,19 @@ namespace lizzie
         {
             if (arguments.Count != 1)
                 throw new LizzieRuntimeException("The 'count' function must be given exactly 1 argument, and that argument must be a list or a map.");
-            if (arguments.Get(0) is List<object> list) {
+            var arg = arguments.Get(0);
+            if (arg is List<object>)
+            {
+                var list = arg as List<object>;
                 return list.Count;
-            } else if (arguments.Get(0) is Dictionary<string, object> map) {
+            }
+            else if (arg is Dictionary<string, object>)
+            {
+                var map = arg as Dictionary<string, object>;
                 return map.Count;
-            } else {
+            }
+            else
+            {
                 throw new LizzieRuntimeException("The 'count' function can only handle a 'list' or a 'map'.");
             }
         });
@@ -622,7 +661,9 @@ namespace lizzie
         {
             if (arguments.Count != 2)
                 throw new LizzieRuntimeException("The 'get' function must be given exactly 2 arguments. The first argument must be a list or a map, and the second argument a numeric value or a key.");
-            if (arguments.Get(1) is string key) {
+            var arg = arguments.Get(1);
+            if (arg is string)
+            {
 
                 // Map de-referencing operation.
                 var map = arguments.Get(0) as Dictionary<string, object>;
@@ -630,7 +671,9 @@ namespace lizzie
                     throw new LizzieRuntimeException("The 'get' function must be given a list or a map as its first argument.");
                 return map[arguments.Get<string>(1)];
 
-            } else {
+            }
+            else
+            {
 
                 // List de-referencing operation.
                 var list = arguments.Get(0) as List<object>;
@@ -653,14 +696,18 @@ namespace lizzie
         {
             if (arguments.Count < 2)
                 throw new LizzieRuntimeException("The 'add' function must be given at least 2 arguments. The first argument must be a 'list' or a 'map', and the rest of the arguments objects to add to your 'list' or your 'map'.");
-            if (arguments.Get(0) is List<object> list) {
-
+            var arg = arguments.Get(0);
+            if (arg is List<object>)
+            {
+                var list = arg as List<object>;
                 // List.
                 list.AddRange(arguments.Skip(1));
                 return list[list.Count - 1];
 
-            } else if (arguments.Get(0) is Dictionary<string, object> map) {
-
+            }
+            else if (arg is Dictionary<string, object>)
+            {
+                var map = arg as Dictionary<string, object>;
                 // Map.
                 var en = arguments.GetEnumerator();
 
@@ -669,7 +716,8 @@ namespace lizzie
 
                 // Adding each value.
                 object lastValue = null;
-                while (en.MoveNext()) {
+                while (en.MoveNext())
+                {
                     var key = (string)en.Current;
                     if (!en.MoveNext())
                         throw new LizzieRuntimeException("The 'add' function requires an even number of arguments when given a 'map' as its destination.");
@@ -678,13 +726,15 @@ namespace lizzie
                 }
                 return lastValue;
 
-            } else {
+            }
+            else
+            {
 
                 // Oops ...!!
                 throw new LizzieRuntimeException("The 'add' function must be given either a 'list' or a 'map' as its first argument.");
             }
         });
-        
+
         /// <summary>
         /// Updates And Returns the specified item of a list previously created by a new value.
         ///
@@ -700,7 +750,7 @@ namespace lizzie
 
             var value = arguments.Get(2);
 
-            if (arguments.Get(1) is string key)
+            if (arguments.Get(1) is string)
             {
 
                 // Map de-referencing operation.
@@ -779,35 +829,51 @@ namespace lizzie
             if (lambda == null)
                 throw new LizzieRuntimeException("When invoking the 'each' function, the third argument must be a lambda object, e.g. '{ ... some code ... }'.");
             var retVal = new List<object>();
-            if (arguments.Get(1) is List<object> list) {
+            var arg = arguments.Get(1);
+            if (arg is List<object>)
+            {
 
                 // List.
-                try {
-                    foreach (var ix in list) {
+                try
+                {
+                    var list = arg as List<object>;
+                    foreach (var ix in list)
+                    {
                         binder[argName] = ix;
                         var current = lambda(ctx, binder, arguments);
                         retVal.Add(current);
                     }
-                } finally {
+                }
+                finally
+                {
                     if (binder.ContainsDynamicKey(argName))
                         binder.RemoveKey(argName);
                 }
 
-            } else if (arguments.Get(1) is Dictionary<string, object> map) {
+            }
+            else if (arg is Dictionary<string, object>)
+            {
 
                 // Map.
-                try {
-                    foreach (var ix in map.Keys) {
+                try
+                {
+                    var map = arg as Dictionary<string, object>;
+                    foreach (var ix in map.Keys)
+                    {
                         binder[argName] = ix;
                         var current = lambda(ctx, binder, arguments);
                         retVal.Add(current);
                     }
-                } finally {
+                }
+                finally
+                {
                     if (binder.ContainsDynamicKey(argName))
                         binder.RemoveKey(argName);
                 }
 
-            } else {
+            }
+            else
+            {
 
                 // Oops ...!!
                 throw new LizzieRuntimeException("The 'each' function must be given either a 'map' or a 'list' as its 2nd argument.");
@@ -826,7 +892,8 @@ namespace lizzie
         {
             var map = new Dictionary<string, object>();
             var en = arguments.GetEnumerator();
-            while (en.MoveNext()) {
+            while (en.MoveNext())
+            {
                 var key = (string)en.Current;
                 if (!en.MoveNext())
                     throw new LizzieRuntimeException("The 'map' function requires an even number of argumentsas a key/value collection.");
@@ -854,28 +921,37 @@ namespace lizzie
          */
         static object ConvertJson(object result)
         {
-            if (result is JObject jObj) {
 
+            if (result is JObject)
+            {
+                var jObj = result as JObject;
                 // Dictionary/map.
                 var map = new Dictionary<string, object>();
-                foreach (var ix in jObj) {
+                foreach (var ix in jObj)
+                {
                     map.Add(ix.Key, ConvertJson(ix.Value));
                 }
                 return map;
 
-            } else if (result is JArray jArr) {
-
+            }
+            else if (result is JArray)
+            {
+                var jArr = result as JArray;
                 // 'list'/List<object>.
                 var list = new List<object>();
-                foreach (var ix in jArr) {
+                foreach (var ix in jArr)
+                {
                     list.Add(ConvertJson(ix));
                 }
                 return list;
-                
-            } else if (result is JValue iVal) {
 
+            }
+            else if (result is JValue)
+            {
+                var iVal = result as JValue;
                 // Some value of some sort.
-                switch (iVal.Type) {
+                switch (iVal.Type)
+                {
 
                     case JTokenType.Integer:
                         return iVal.Value<long>();
@@ -920,7 +996,7 @@ namespace lizzie
             if (arguments.Count != 1)
                 throw new LizzieRuntimeException("The 'string' function must be given exactly 1 argument.");
             var builder = new StringBuilder();
-            ToString (arguments.Get(0), builder);
+            ToString(arguments.Get(0), builder);
             return builder.ToString();
         });
 
@@ -933,36 +1009,49 @@ namespace lizzie
          */
         static void ToString(object value, StringBuilder builder, bool isJson = false)
         {
-            if (value == null) {
+            if (value == null)
+            {
 
                 // Null.
                 builder.Append("null");
                 return;
 
-            } else if (value is List<object> list) {
-
+            }
+            else if (value is List<object>)
+            {
+                var list = value as List<object>;
                 // List.
                 builder.Append("[");
                 var first = true;
-                foreach (var ix in list) {
-                    if (first) {
+                foreach (var ix in list)
+                {
+                    if (first)
+                    {
                         first = false;
-                    } else {
+                    }
+                    else
+                    {
                         builder.Append(",");
                     }
                     ToString(ix, builder, true);
                 }
                 builder.Append("]");
 
-            } else if (value is Dictionary<string, object> map) {
-
+            }
+            else if (value is Dictionary<string, object>)
+            {
+                var map = value as Dictionary<string, object>;
                 // Map.
                 builder.Append("{");
                 var first = true;
-                foreach (var key in map.Keys) {
-                    if (first) {
+                foreach (var key in map.Keys)
+                {
+                    if (first)
+                    {
                         first = false;
-                    } else {
+                    }
+                    else
+                    {
                         builder.Append(",");
                     }
                     builder.Append($"\"{key.Replace("\"", "\\\"")}\":");
@@ -970,17 +1059,22 @@ namespace lizzie
                 }
                 builder.Append("}");
 
-            } else {
+            }
+            else
+            {
 
-                if (value is string valueStr) {
-
+                if (value is string)
+                {
+                    var valueStr = value as string;
                     // String, making sure we escape it, and wrap it in double quotes.
                     if (isJson)
                         builder.Append("\"" + valueStr.Replace("\"", "\\\"") + "\"");
                     else
                         builder.Append(valueStr);
 
-                } else {
+                }
+                else
+                {
 
                     // Everything else.
                     builder.Append(Convert.ToString(value, CultureInfo.InvariantCulture));
@@ -1000,10 +1094,10 @@ namespace lizzie
             if (arguments.Count != 1)
                 throw new LizzieRuntimeException("The 'number' function must be given exactly 1 argument.");
             var tmp = arguments.Get(0);
-            if (tmp is long tmpLong)
-                return tmpLong;
-            if (tmp is double tmpDouble)
-                return tmpDouble;
+            if (tmp is long)
+                return (long)tmp;
+            if (tmp is double)
+                return (double)tmp;
             var tmpString = arguments.Get<string>(0);
             if (tmpString.Contains("."))
                 return double.Parse(tmpString);
@@ -1040,7 +1134,8 @@ namespace lizzie
                 throw new LizzieRuntimeException("The second argument to 'substr' cannot be more than the total length of your string.");
 
             // Checking if we have an end position.
-            if (arguments.Count > 2) {
+            if (arguments.Count > 2)
+            {
                 var length = arguments.Get<int>(2);
                 if (length == 0)
                     return "";

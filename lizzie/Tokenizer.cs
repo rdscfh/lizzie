@@ -30,8 +30,12 @@ namespace lizzie
         /// <param name="tokenizer">Tokenizer implementation, normally an instance of the LizzieTokenizer class.</param>
         public Tokenizer(ITokenizer tokenizer)
         {
-            // Not passing in a tokenizer is a logical runtime error!
-            _tokenizer = tokenizer ?? throw new LizzieTokenizerException("No tokenizer implementation given to tokenizer.");
+            if (tokenizer != null) _tokenizer = tokenizer;
+            else
+            {
+                // Not passing in a tokenizer is a logical runtime error!
+                throw new LizzieTokenizerException("No tokenizer implementation given to tokenizer.");
+            }
         }
 
         /// <summary>
@@ -45,7 +49,8 @@ namespace lizzie
         {
             // Notice! We do NOT take ownership over stream!
             StreamReader reader = new StreamReader(stream, encoding ?? Encoding.UTF8, true, 1024);
-            while (true) {
+            while (true)
+            {
                 var token = _tokenizer.Next(reader);
                 if (token == null)
                     break;
@@ -63,8 +68,10 @@ namespace lizzie
         /// <param name="encoding">Encoding to use for stream, if not given this defaults to UTF8.</param>
         public IEnumerable<string> Tokenize(IEnumerable<Stream> streams, Encoding encoding = null)
         {
-            foreach (var ixStream in streams) {
-                foreach (var ixToken in Tokenize(ixStream, encoding)) {
+            foreach (var ixStream in streams)
+            {
+                foreach (var ixToken in Tokenize(ixStream, encoding))
+                {
                     yield return ixToken;
                 }
             }
@@ -77,8 +84,10 @@ namespace lizzie
         /// <param name="code">Code to tokenize.</param>
         public IEnumerable<string> Tokenize(string code)
         {
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(code))) {
-                foreach (var ix in Tokenize(stream)) {
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(code)))
+            {
+                foreach (var ix in Tokenize(stream))
+                {
                     yield return ix;
                 }
             }
@@ -91,8 +100,10 @@ namespace lizzie
         /// <param name="snippets">Code snippets to tokenize.</param>
         public IEnumerable<string> Tokenize(IEnumerable<string> snippets)
         {
-            foreach (var ixCode in snippets) {
-                foreach (var ixToken in Tokenize(ixCode)) {
+            foreach (var ixCode in snippets)
+            {
+                foreach (var ixToken in Tokenize(ixCode))
+                {
                     yield return ixToken;
                 }
             }
@@ -107,9 +118,11 @@ namespace lizzie
         /// <param name="reader">Reader to eat whitespace characters from.</param>
         public static void EatSpace(StreamReader reader)
         {
-            while (!reader.EndOfStream) {
+            while (!reader.EndOfStream)
+            {
                 var ch = (char)reader.Peek();
-                if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n') {
+                if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n')
+                {
                     reader.Read();
                     continue;
                 }
@@ -143,12 +156,15 @@ namespace lizzie
              * shouldn't be too far away from optimal either ...
              */
             var buffer = new List<char>(sequence.Length + 1);
-            while(!reader.EndOfStream) {
+            while (!reader.EndOfStream)
+            {
                 buffer.Add((char)reader.Read());
-                if (buffer.Count > sequence.Length) {
+                if (buffer.Count > sequence.Length)
+                {
                     buffer.RemoveAt(0);
                 }
-                if (buffer[0] == sequence[0]) {
+                if (buffer[0] == sequence[0])
+                {
                     if (sequence == new string(buffer.ToArray()))
                         return; // Done!
                 }
@@ -170,8 +186,10 @@ namespace lizzie
         public static string ReadString(StreamReader reader, char stop = '"', int maxStringSize = -1)
         {
             var builder = new StringBuilder();
-            for (var c = reader.Read(); c != -1; c = reader.Read()) {
-                switch (c) {
+            for (var c = reader.Read(); c != -1; c = reader.Read())
+            {
+                switch (c)
+                {
                     case '\\':
                         builder.Append(GetEscapedCharacter(reader, stop));
                         break;
@@ -183,7 +201,7 @@ namespace lizzie
                             return builder.ToString();
                         if (maxStringSize != -1 && builder.Length >= maxStringSize)
                             throw new LizzieTokenizerException($"String size exceeded maximum allowed size of '{maxStringSize}' characters.");
-                        builder.Append ((char)c);
+                        builder.Append((char)c);
                         break;
                 }
             }
@@ -193,12 +211,13 @@ namespace lizzie
         /*
          * Returns escape character.
          */
-        static string GetEscapedCharacter (StreamReader reader, char stop)
+        static string GetEscapedCharacter(StreamReader reader, char stop)
         {
             var ch = reader.Read();
             if (ch == -1)
                 throw new LizzieTokenizerException("EOF found before string literal was closed");
-            switch ((char)ch) {
+            switch ((char)ch)
+            {
                 case '\\':
                     return "\\";
                 case 'a':

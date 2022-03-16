@@ -101,14 +101,16 @@ namespace lizzie
              * also making sure we have our root level stack object available during evaluation of
              * our lambda.
              */
-            return new Lambda<TContext>((ctx, binder) => {
+            return new Lambda<TContext>((ctx, binder) =>
+            {
 
                 /*
                  * Looping through each symbolic delegate, returning the 
                  * return value from the last to caller.
                  */
                 object result = null;
-                foreach (var ix in functions) {
+                foreach (var ix in functions)
+                {
                     result = ix(ctx, binder, null);
                 }
                 return result;
@@ -127,7 +129,8 @@ namespace lizzie
             // Creating a list of functions and returning these to caller.
             var content = new List<Function<TContext>>();
             var eof = !en.MoveNext();
-            while (!eof && en.Current != "}") {
+            while (!eof && en.Current != "}")
+            {
 
                 // Compiling currently tokenized symbol.
                 var tuple = CompileStatement<TContext>(en);
@@ -156,7 +159,8 @@ namespace lizzie
         static Tuple<Function<TContext>, bool> CompileStatement<TContext>(IEnumerator<string> en)
         {
             // Checking type of token, and acting accordingly.
-            switch (en.Current) {
+            switch (en.Current)
+            {
                 case "{":
                     return CompileLambda<TContext>(en);
                 case "@":
@@ -185,9 +189,11 @@ namespace lizzie
              * Creating a function that evaluates every function sequentially, and
              * returns the result of the last function evaluation to the caller.
              */
-            Function<TContext> function = new Function<TContext>((ctx, binder, arguments) => {
+            Function<TContext> function = new Function<TContext>((ctx, binder, arguments) =>
+            {
                 object result = null;
-                foreach (var ix in functions) {
+                foreach (var ix in functions)
+                {
                     result = ix(ctx, binder, null);
                 }
                 return result;
@@ -201,7 +207,8 @@ namespace lizzie
              * Lizzie, and does not require the '@' character to accomplish "lazy
              * evaluation".
              */
-            var lazyFunction = new Function<TContext>((ctx2, binder2, arguments2) => {
+            var lazyFunction = new Function<TContext>((ctx2, binder2, arguments2) =>
+            {
                 return function;
             });
             return new Tuple<Function<TContext>, bool>(lazyFunction, tuples.Item2 || !en.MoveNext());
@@ -226,7 +233,8 @@ namespace lizzie
             var eof = !en.MoveNext();
 
             // Checking if this is a function invocation.
-            if (!eof && en.Current == "(") {
+            if (!eof && en.Current == "(")
+            {
 
                 /*
                  * Notice, since this is a literally referenced function invocation, we
@@ -238,18 +246,22 @@ namespace lizzie
                  */
                 var tuple = ApplyArguments<TContext>(symbolName, en);
                 var functor = tuple.Item1;
-                return new Tuple<Function<TContext>, bool>(new Function<TContext>((ctx, binder, arguments) => {
+                return new Tuple<Function<TContext>, bool>(new Function<TContext>((ctx, binder, arguments) =>
+                {
                     return functor;
                 }), tuple.Item2);
 
-            } else {
+            }
+            else
+            {
 
                 /*
                  * Creating a function that evaluates to the constant value of the symbol's name.
                  * When you use the '@' character with a symbol, this implies simply returning the
                  * symbol's name.
                  */
-                return new Tuple<Function<TContext>, bool>(new Function<TContext>((ctx, binder, arguments) => {
+                return new Tuple<Function<TContext>, bool>(new Function<TContext>((ctx, binder, arguments) =>
+                {
                     return symbolName;
                 }), eof);
             }
@@ -272,7 +284,8 @@ namespace lizzie
             en.MoveNext();
 
             // Returning a function that evaluates to the actual string's constant value.
-            var function = new Function<TContext>((ctx, binder, arguments) => {
+            var function = new Function<TContext>((ctx, binder, arguments) =>
+            {
                 return stringConstant;
             });
             return new Tuple<Function<TContext>, bool>(function, !en.MoveNext());
@@ -287,25 +300,35 @@ namespace lizzie
             object numericConstant = null;
 
             // Checking if this is a floating point value.
-            if (en.Current.IndexOfAny(new[] { '.', 'e', 'E' }) != -1) {
-
+            if (en.Current.IndexOfAny(new[] { '.', 'e', 'E' }) != -1)
+            {
+                double dblResult;
                 // Notice, all floating point numbers are treated as double.
-                var success = double.TryParse(en.Current, NumberStyles.Any, CultureInfo.InvariantCulture, out double dblResult);
+                var success = double.TryParse(en.Current, NumberStyles.Any, CultureInfo.InvariantCulture, out dblResult);
                 if (!success)
                     throw new LizzieRuntimeException($"Sorry, I tried my best to parse '{en.Current}' as a double, but I failed.");
                 numericConstant = dblResult;
 
-            } else {
-
+            }
+            else
+            {
+                long longResult;
                 // Notice, all integer numbers are treated as long.
-                var success = long.TryParse(en.Current, NumberStyles.Any, CultureInfo.InvariantCulture, out long longResult);
-                if (!success)
+                if (long.TryParse(en.Current, NumberStyles.Any, CultureInfo.InvariantCulture, out longResult))
+                {
+                    numericConstant = longResult;
+                }
+                else
+                {
                     throw new LizzieRuntimeException($"Sorry, I tried my best to parse '{en.Current}' as a long, but I failed.");
-                numericConstant = longResult;
+                }
+
+
             }
 
             // Creates a function that evaluates to the actual constant number.
-            var function = new Function<TContext>((ctx, binder, arguments) => {
+            var function = new Function<TContext>((ctx, binder, arguments) =>
+            {
                 return numericConstant;
             });
             return new Tuple<Function<TContext>, bool>(function, !en.MoveNext());
@@ -325,15 +348,19 @@ namespace lizzie
             var eof = !en.MoveNext();
 
             // Checking if this is a function invocation.
-            if (!eof && en.Current == "(") {
+            if (!eof && en.Current == "(")
+            {
 
                 // Function invocation, making sure we apply arguments,
                 return ApplyArguments<TContext>(symbolName, en);
 
-            } else {
+            }
+            else
+            {
 
                 // Referencing value of symbol.
-                return new Tuple<Function<TContext>, bool>(new Function<TContext>((ctx, binder, arguments) => {
+                return new Tuple<Function<TContext>, bool>(new Function<TContext>((ctx, binder, arguments) =>
+                {
 
                     return binder[symbolName];
 
@@ -354,7 +381,8 @@ namespace lizzie
                 throw new LizzieParsingException("Unexpected EOF while parsing function invocation.");
 
             // Looping through all arguments, if there are any.
-            while (en.Current != ")") {
+            while (en.Current != ")")
+            {
 
                 // Compiling current argument.
                 var tuple = CompileStatement<TContext>(en);
@@ -372,19 +400,26 @@ namespace lizzie
             /*
              * Creates a function invocation that evaluates its arguments at runtime.
              */
-            return new Tuple<Function<TContext>, bool>(new Function<TContext>((ctx, binder, args) => {
+            return new Tuple<Function<TContext>, bool>(new Function<TContext>((ctx, binder, args) =>
+            {
 
                 // Applying arguments.
                 var appliedArguments = new Arguments(arguments.Select(ix => ix(ctx, binder, new Arguments())));
-                if (appliedArguments.Count == 1 && appliedArguments.Get(0) is Arguments explicitlyApplied) {
-                    appliedArguments = explicitlyApplied;
+                if (appliedArguments.Count == 1)
+                {
+                    var arg = appliedArguments.Get(0);
+                    if (arg is Arguments)
+                    {
+                        appliedArguments = arg as Arguments;
+                    }
                 }
 
                 // Retrieving symbol's value and doing some basic sanity checks.
                 var symbol = binder[symbolName];
                 if (symbol == null)
                     throw new LizzieRuntimeException($"Symbol '{symbolName}' is null.");
-                if (symbol is Function<TContext> functor)
+                var functor = symbol as Function<TContext>;
+                if (functor != null)
                     return functor(ctx, binder, appliedArguments); // Success!
                 throw new LizzieRuntimeException($"'{symbolName}' is not a function, but a '{symbol.GetType().FullName}'");
             }), !en.MoveNext());
@@ -404,13 +439,16 @@ namespace lizzie
             string coefficient = SanitizeSign(parts[0]);
 
             // If we have two parts we need to check the exponent.
-            if (parts.Length == 2) {
+            if (parts.Length == 2)
+            {
 
                 var exponent = SanitizeSign(parts[1]);
                 if (exponent.Any(ix => !char.IsDigit(ix)))
                     return false;
 
-            } else if (parts.Length != 1) {
+            }
+            else if (parts.Length != 1)
+            {
 
                 return false;
             }
@@ -425,7 +463,8 @@ namespace lizzie
          */
         private static string SanitizeSign(string number)
         {
-            if (number.Length > 1 && (number[0] == '-' || number[0] == '+')) {
+            if (number.Length > 1 && (number[0] == '-' || number[0] == '+'))
+            {
                 number = number.Substring(1);
             }
             return number;
